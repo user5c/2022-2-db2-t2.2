@@ -53,6 +53,7 @@ contract HorseBetting {
      */
     function registerCareer(uint256 code, string memory name) public  {
         // TODO: Validate career code to know if it doesn't exist already
+        careerCodeToCareersListIndex[code] = careers.length;
         careers.push(
             Career({
                 code: code,
@@ -60,7 +61,6 @@ contract HorseBetting {
                 state: CareerState.CREATED
             })
         );
-        careerCodeToCareersListIndex[code] = careers.length;
     }
 
 }
