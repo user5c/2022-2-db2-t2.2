@@ -94,18 +94,16 @@ contract HorseBetting {
      * @param careerCode value of code career
      */
     function registerHorseInCareer(uint256 horseCode, uint256 careerCode) public  {
-        // TODO: Validate horse code to know if it doesn't exist already
-        
         // Find Career object
         uint256 careerCodeListIndex = careerCodeToCareersListIndex[careerCode];
         
         // Validate career code to know if it doesn't exist already
         require(careerCodeListIndex > 0, "Career does not exists");
 
-        Career memory careerObj = careers[careerCodeListIndex];
+        Career memory careerNew = careers[careerCodeListIndex];
         
         // Validate if the career has CREATED state
-        require(careerObj.state == CareerState.CREATED, "Career must have a CREATED state");
+        require(careerNew.state == CareerState.CREATED, "Career must have a CREATED state");
         
         // Get all careers per horse
         Career[] storage careersPerHorse = horseCodeToCareers[horseCode];
@@ -113,24 +111,27 @@ contract HorseBetting {
         // Validate if the career has a number greater than 5 and less than 2 horses
         require(careersPerHorse.length < 5, "Career accepts 5 horses only");
         
-        
         // Find Horse object
         uint256 horseCodeListIndex = horseCodeToHorsesListIndex[horseCode];
         
         // Validate horse code to know if it doesn't exist already
         require(horseCodeListIndex > 0, "Horse does not exists");
         
-        Horse memory horseObj = horses[horseCodeListIndex];
+        Horse memory horseNew = horses[horseCodeListIndex];
 
         // Get all horses per career
         Horse[] storage horsesPerCareer = careerCodeToHorses[careerCode];
 
-        // TODO: Validate if the horse is already registered in the career 
+        // Validate if the horse is already registered in the career
+        for(uint8 i=0; i < horsesPerCareer.length; i++) {
+            Horse memory horseInCareer = horsesPerCareer[i];
+            require(horseInCareer.code != horseNew.code, "Horse is already registered in the career");
+        }
 
         // Add a career to the horse
-        careersPerHorse.push(careerObj);
+        careersPerHorse.push(careerNew);
         // Add a horse to the career
-        horsesPerCareer.push(horseObj);
+        horsesPerCareer.push(horseNew);
 
     }
 
