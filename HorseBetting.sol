@@ -46,6 +46,12 @@ contract HorseBetting {
         //console.log("Owner contract deployed by:", msg.sender);
         //owner = msg.sender; // 'msg.sender' is sender of current call, contract deployer for a constructor
         //emit OwnerSet(address(0), owner);
+
+        // Default values:
+        // When an index doesn't exists into array then the return default value is 0
+        // So if you save an object at position 0, it is imposible to differenciate between two values
+        registerCareer(0, "defaultCareer");
+        registerHorse(0, "defaultHorse");
     }
 
     /**
@@ -92,12 +98,11 @@ contract HorseBetting {
         
         // Find Career object
         uint256 careerCodeListIndex = careerCodeToCareersListIndex[careerCode];
-        Career memory careerObj = careers[careerCodeListIndex];
         
         // Validate career code to know if it doesn't exist already
-        // NOTE: Validation don't work
-        bool careerExists = careerObj.code == 0 && keccak256(abi.encodePacked("")) == keccak256(abi.encodePacked(careerObj.name));
-        require(careerExists, "Career does not exists");
+        require(careerCodeListIndex > 0, "Career does not exists");
+
+        Career memory careerObj = careers[careerCodeListIndex];
         
         // Validate if the career has CREATED state
         require(careerObj.state == CareerState.CREATED, "Career must have a CREATED state");
@@ -111,12 +116,11 @@ contract HorseBetting {
         
         // Find Horse object
         uint256 horseCodeListIndex = horseCodeToHorsesListIndex[horseCode];
-        Horse memory horseObj = horses[horseCodeListIndex];
-
+        
         // Validate horse code to know if it doesn't exist already
-        // NOTE: Validation don't work
-        bool horseExists = horseObj.code == 0 && keccak256(abi.encodePacked("")) == keccak256(abi.encodePacked(horseObj.name));
-        require(horseExists, "Horse does not exists");
+        require(horseCodeListIndex > 0, "Horse does not exists");
+        
+        Horse memory horseObj = horses[horseCodeListIndex];
 
         // Get all horses per career
         Horse[] storage horsesPerCareer = careerCodeToHorses[careerCode];
