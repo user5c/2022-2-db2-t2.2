@@ -130,4 +130,16 @@ contract HorseBetting {
 
     }
 
+    // TODO: method to change career state
+
+    // TODO: betting method.
+    // - Non-host users can bet.
+    // - User can bet on one horse per career
+    // - User can add but not decrease the bet on a horse
+
+
+    // TODO: report the career finished.
+    // CareerState.FINISHED
+
+
 }
