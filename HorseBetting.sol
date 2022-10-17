@@ -135,7 +135,17 @@ contract HorseBetting {
 
     }
 
-    // TODO: method to change career state
+    /**
+     * @dev Change career state only if the career have greater than 2 horses registered
+     * @param careerCode value of code career
+     */
+    function changeCareerState(uint256 careerCode) public {
+        // TODO: Find career object 
+        // TODO: Validate if the career have and correct state
+        // TODO: Validate if the career have greater than 2 horses registered to do the state change
+        // TODO: Change career state and return new career state
+
+    }
 
     // TODO: betting method.
     // - Non-host users can bet.
