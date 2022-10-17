@@ -47,7 +47,7 @@ contract HorseBetting {
     }
 
     /**
-     * @dev Career value in variable
+     * @dev Create a Career Object and save identifier into a map careerCodeToCareersListIndex
      * @param code value to career
      * @param name value to career
      */
@@ -59,6 +59,22 @@ contract HorseBetting {
                 code: code,
                 name: name,
                 state: CareerState.CREATED
+            })
+        );
+    }
+
+    /**
+     * @dev Create a Horse Object and save identifier into a map horseCodeToHorsesListIndex
+     * @param code value to career
+     * @param name value to career
+     */
+    function registerHorse(uint256 code, string memory name) public  {
+        // TODO: Validate career code to know if it doesn't exist already
+        horseCodeToHorsesListIndex[code] = horses.length;
+        horses.push(
+            Horse({
+                code: code,
+                name: name
             })
         );
     }
