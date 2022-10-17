@@ -39,7 +39,7 @@ contract HorseBetting {
     // Register a horse(Horse object) in a career(careerCode)
     mapping(uint256 => Career[]) public horseCodeToCareers;
     // Join a career(Career object) with a horse(horseCode) to find how many horses have a career
-    mapping(uint256 => Horse[]) public careerCodeToHorses;
+    mapping(uint256 => Horse[]) public careerCodeToHorses; // less than or equal to 5 horses per career
 
     
     constructor() {
@@ -72,6 +72,7 @@ contract HorseBetting {
      */
     function registerHorse(uint256 code, string memory name) public  {
         // TODO: Validate horse code to know if it doesn't exist already
+        // TODO: Catch the error when the number of horses is greater than 5
         horseCodeToHorsesListIndex[code] = horses.length;
         horses.push(
             Horse({
@@ -82,29 +83,49 @@ contract HorseBetting {
     }
 
     /**
-     * @dev Register a Horse in a Career wiht CREATED status
+     * @dev Register a Horse in a Career wiht CREATED state
      * @param horseCode value of code horse
      * @param careerCode value of code career
      */
     function registerHorseInCareer(uint256 horseCode, uint256 careerCode) public  {
         // TODO: Validate horse code to know if it doesn't exist already
+        
         // Find Career object
         uint256 careerCodeListIndex = careerCodeToCareersListIndex[careerCode];
-        Career storage careerObj = careers[careerCodeListIndex];
+        Career memory careerObj = careers[careerCodeListIndex];
+        
+        // Validate career code to know if it doesn't exist already
+        // NOTE: Validation don't work
+        bool careerExists = careerObj.code == 0 && keccak256(abi.encodePacked("")) == keccak256(abi.encodePacked(careerObj.name));
+        require(careerExists, "Career does not exists");
+        
+        // Validate if the career has CREATED state
+        require(careerObj.state == CareerState.CREATED, "Career must have a CREATED state");
+        
+        // Get all careers per horse
+        Career[] storage careersPerHorse = horseCodeToCareers[horseCode];
+        
+        // Validate if the career has a number greater than 5 and less than 2 horses
+        require(careersPerHorse.length < 5, "Career accepts 5 horses only");
+        
         
         // Find Horse object
         uint256 horseCodeListIndex = horseCodeToHorsesListIndex[horseCode];
-        Horse storage horseObj = horses[horseCodeListIndex];
+        Horse memory horseObj = horses[horseCodeListIndex];
 
-        // TODO: Validate if the career has a number greater than 5 and less than 2 horses
-        // TODO: Validate if the career has CREATED status
+        // Validate horse code to know if it doesn't exist already
+        // NOTE: Validation don't work
+        bool horseExists = horseObj.code == 0 && keccak256(abi.encodePacked("")) == keccak256(abi.encodePacked(horseObj.name));
+        require(horseExists, "Horse does not exists");
+
+        // Get all horses per career
+        Horse[] storage horsesPerCareer = careerCodeToHorses[careerCode];
+
+        // TODO: Validate if the horse is already registered in the career 
 
         // Add a career to the horse
-        Career[] storage careersPerHorse = horseCodeToCareers[horseCode];
         careersPerHorse.push(careerObj);
-
         // Add a horse to the career
-        Horse[] storage horsesPerCareer = careerCodeToHorses[careerCode];
         horsesPerCareer.push(horseObj);
 
     }
