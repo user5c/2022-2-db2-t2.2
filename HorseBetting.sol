@@ -179,6 +179,7 @@ contract HorseBetting {
     // - User can add but not decrease the bet on a horse
     function bet(uint256 horseCode, uint256 careerCode) public payable {
         // TODO: Validate if msg.sender is not the host
+        // TODO: Validate if value of the ber is greater than or equal 1
         // Find Career object
         uint256 careerCodeListIndex = careerCodeToCareersListIndex[careerCode];
         
@@ -202,10 +203,14 @@ contract HorseBetting {
         Horse[] storage horsesPerCareer = careerCodeToHorses[careerCode];
 
         // Validate if the horse is not already registered in the career
+        bool horseRegistered = false;
         for (uint8 i=0; i < horsesPerCareer.length; i++) {
             Horse memory horseInCareer = horsesPerCareer[i];
-            require(horseInCareer.code == horseObj.code, "Horse is not already registered in the career");
+            if (horseInCareer.code == horseObj.code) {
+                horseRegistered = true;
+            }
         }
+        require(horseRegistered, "Horse is not already registered in the career");
 
         // Add bet in career
         Bet[] storage bets = careerCodeToBet[careerObj.code];
