@@ -3,9 +3,8 @@
 pragma solidity >=0.7.0 <0.9.0;
 
 /**
- * @title Storage
- * @dev Store & retrieve value in a variable
- * @custom:dev-run-script ./scripts/deploy_with_ethers.ts
+ * @title HorseBetting
+ * @dev 
  */
 contract HorseBetting {
 
@@ -23,9 +22,10 @@ contract HorseBetting {
         string name;
     }
 
-    struct HorseRace {
-        Career carrer;
+    struct Bet {
         Horse horse;
+        address gambler;
+        uint256 value;
     }
 
     Career[] public careers;
@@ -41,7 +41,10 @@ contract HorseBetting {
     // Join a career(Career object) with a horse(horseCode) to find how many horses have a career
     mapping(uint256 => Horse[]) public careerCodeToHorses; // less than or equal to 5 horses per career
 
-    
+    // Register a bet per horse in a career and associate to gamber
+    mapping(uint256 => Bet[]) public careerCodeToBet;
+
+
     constructor() {
         //console.log("Owner contract deployed by:", msg.sender);
         //owner = msg.sender; // 'msg.sender' is sender of current call, contract deployer for a constructor
@@ -151,6 +154,55 @@ contract HorseBetting {
     // - Non-host users can bet.
     // - User can bet on one horse per career
     // - User can add but not decrease the bet on a horse
+    function bet(uint256 horseCode, uint256 careerCode) public payable {
+        // TODO: Validate if msg.sender is not the host
+        // Find Career object
+        uint256 careerCodeListIndex = careerCodeToCareersListIndex[careerCode];
+        
+        // Validate career code to know if it doesn't exist already
+        require(careerCodeListIndex > 0, "Career does not exists");
+
+        Career memory careerObj = careers[careerCodeListIndex];
+        
+        // Validate if the career has CREATED state
+        require(careerObj.state == CareerState.REGISTERED, "Career must have a REGISTERED state");
+        
+        // Find Horse object
+        uint256 horseCodeListIndex = horseCodeToHorsesListIndex[horseCode];
+        
+        // Validate horse code to know if it doesn't exist already
+        require(horseCodeListIndex > 0, "Horse does not exists");
+
+        Horse memory horseObj = horses[horseCodeListIndex];
+
+        // Get all horses per career
+        Horse[] storage horsesPerCareer = careerCodeToHorses[careerCode];
+
+        // Validate if the horse is not already registered in the career
+        for (uint8 i=0; i < horsesPerCareer.length; i++) {
+            Horse memory horseInCareer = horsesPerCareer[i];
+            require(horseInCareer.code == horseObj.code, "Horse is not already registered in the career");
+        }
+
+        // Add bet in career
+        Bet[] storage bets = careerCodeToBet[careerObj.code];
+
+        // Validate if the gambler is already in the career
+        for (uint8 j=0; j < bets.length; j++) {
+            Bet memory betObj = bets[j];
+            require (betObj.gambler != msg.sender, "The user has already registered a bet on this career");
+        }
+
+        bets.push(
+            Bet({
+                horse: horseObj,
+                gambler: msg.sender,
+                value: msg.value
+            })
+        );
+    }
+
+
 
 
     // TODO: report the career finished.
