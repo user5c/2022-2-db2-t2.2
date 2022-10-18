@@ -142,12 +142,35 @@ contract HorseBetting {
      * @dev Change career state only if the career have greater than 2 horses registered
      * @param careerCode value of code career
      */
-    function changeCareerState(uint256 careerCode) public {
-        // TODO: Find career object 
-        // TODO: Validate if the career have and correct state
-        // TODO: Validate if the career have greater than 2 horses registered to do the state change
-        // TODO: Change career state and return new career state
+    function changeCareerState(uint256 careerCode) public returns (CareerState){
+        // TODO: Validate host user is the caller to the function
+        // Find Career object
+        uint256 careerCodeListIndex = careerCodeToCareersListIndex[careerCode];
+        
+        // Validate career code to know if it doesn't exist already
+        require(careerCodeListIndex > 0, "Career does not exists");
 
+        Career storage careerObj = careers[careerCodeListIndex];
+
+        // Get all horses per career
+        Horse[] storage horsesPerCareer = careerCodeToHorses[careerCode];
+        
+        // Validate if the career have and correct state and meet requirements to change state
+        if (careerObj.state == CareerState.CREATED) {
+            bool moreThan2Horses = horsesPerCareer.length >= 2;
+            require(moreThan2Horses, "To change the state of the career then the career must have more than 2 horses registered");
+            careerObj.state = CareerState.REGISTERED;
+        } else {
+            if (careerObj.state == CareerState.REGISTERED) {
+                // TODO: finish the career and give the prize to the winners
+                //careerObj.state = CareerState.FINISHED;
+                
+                // temporal sentence to get all money and send to the caller
+                selfdestruct(payable(msg.sender));
+            }
+        }
+
+        return careerObj.state;
     }
 
     // TODO: betting method.
@@ -201,12 +224,4 @@ contract HorseBetting {
             })
         );
     }
-
-
-
-
-    // TODO: report the career finished.
-    // CareerState.FINISHED
-
-
 }
