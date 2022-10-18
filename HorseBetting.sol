@@ -208,6 +208,7 @@ contract HorseBetting {
             Horse memory horseInCareer = horsesPerCareer[i];
             if (horseInCareer.code == horseObj.code) {
                 horseRegistered = true;
+                break;
             }
         }
         require(horseRegistered, "Horse is not already registered in the career");
