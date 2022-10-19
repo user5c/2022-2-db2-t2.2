@@ -15,11 +15,13 @@ contract HorseBetting {
         uint256 code;
         string name;
         CareerState state;
+        bool isExsit;
     }
 
     struct Horse {
         uint256 code;
         string name;
+        bool isExsit;
     }
 
     struct Bet {
@@ -45,6 +47,9 @@ contract HorseBetting {
     mapping(uint256 => Bet[]) public careerCodeToBet;
 
 
+    // Register if the code of carrer escists  https://ethereum.stackexchange.com/questions/84109/solidity-0-4-26-check-if-element-already-exists-in-array
+    mapping(uint256 => bool) public careerExists;
+
     constructor() {
         //console.log("Owner contract deployed by:", msg.sender);
         //owner = msg.sender; // 'msg.sender' is sender of current call, contract deployer for a constructor
@@ -63,29 +68,39 @@ contract HorseBetting {
      * @param name value to career
      */
     function registerCareer(uint256 code, string memory name) public  {
-        // TODO: Validate career code to know if it doesn't exist already
+        uint256 idexList = careerCodeToCareersListIndex[code];
+        
+        // Validate career code to know if it doesn't exist already 
+        require(!careers[idexList].isExsit, "The career code already exists");
+        
         careerCodeToCareersListIndex[code] = careers.length;
         careers.push(
             Career({
                 code: code,
                 name: name,
-                state: CareerState.CREATED
+                state: CareerState.CREATED,
+                isExsit:true
             })
         );
     }
 
     /**
      * @dev Create a Horse Object and save identifier into a map horseCodeToHorsesListIndex
-     * @param code value to career
-     * @param name value to career
+     * @param code value to hourse
+     * @param name value to hourse
      */
     function registerHorse(uint256 code, string memory name) public  {
-        // TODO: Validate horse code to know if it doesn't exist already
+        uint256 idexList = horseCodeToHorsesListIndex[code];
+        
+        // Validate horse code to know if it doesn't exist already
+        require(!horses[idexList].isExsit, "The hourse code already exists");
+
         horseCodeToHorsesListIndex[code] = horses.length;
         horses.push(
             Horse({
                 code: code,
-                name: name
+                name: name,
+                isExsit:true
             })
         );
     }
