@@ -233,23 +233,33 @@ contract HorseBetting {
         // Add bet in career
         Bet[] storage bets = careerCodeToBet[careerObj.code];
 
-        // Validate if the gambler is already in the career
-        for (uint8 j=0; j < bets.length; j++) {
-            Bet memory betObj = bets[j];
-            require (betObj.gambler != msg.sender, "The user has already registered a bet on this career");
+        // Validate if the gambler is already in the career and if he want increase the bet
+        bool gamblerInCareer = false;
+        Bet memory betObjTmp;
+        uint256 indexBet = 0;
+        for (indexBet; indexBet < bets.length; indexBet++) {
+            betObjTmp = bets[indexBet];
+            if (betObjTmp.gambler == msg.sender) {
+                gamblerInCareer = true;
+                break;
+            }
+        }
+        
+        if (gamblerInCareer) {
+            require (betObjTmp.horse.code == horseObj.code, "The user has already registered a bet in other horse on this career");
+            // Increase the bet 
+            betObjTmp.value += msg.value;
+            bets[indexBet] = betObjTmp;
+        } else {
+            bets.push(
+                Bet({
+                    horse: horseObj,
+                    gambler: msg.sender,
+                    value: msg.value
+                })
+            );
         }
 
-        bets.push(
-            Bet({
-                horse: horseObj,
-                gambler: msg.sender,
-                value: msg.value
-            })
-        );
     }
 
-    // TODO: User can add but not decrease the bet on a horse
-    function increareBet() public {
-        
-    }
 }
