@@ -81,7 +81,6 @@ contract HorseBetting {
      */
     function registerHorse(uint256 code, string memory name) public  {
         // TODO: Validate horse code to know if it doesn't exist already
-        // TODO: Catch the error when the number of horses is greater than 5
         horseCodeToHorsesListIndex[code] = horses.length;
         horses.push(
             Horse({
@@ -111,7 +110,7 @@ contract HorseBetting {
         // Get all careers per horse
         Career[] storage careersPerHorse = horseCodeToCareers[horseCode];
         
-        // Validate if the career has a number greater than 5 and less than 2 horses
+        // Validate if the career has a number less than 5 horses
         require(careersPerHorse.length < 5, "Career accepts 5 horses only");
         
         // Find Horse object
@@ -173,10 +172,11 @@ contract HorseBetting {
         return careerObj.state;
     }
 
-    // TODO: betting method.
-    // - Non-host users can bet.
-    // - User can bet on one horse per career
-    // - User can add but not decrease the bet on a horse
+    /**
+     * @dev bet in a unique horse per career an amount of Eth. The method is only used by non-host user
+     * @param horseCode value of code horse
+     * @param careerCode value of code career
+     */
     function bet(uint256 horseCode, uint256 careerCode) public payable {
         // TODO: Validate if msg.sender is not the host
         // TODO: Validate if value of the ber is greater than or equal 1
@@ -229,5 +229,10 @@ contract HorseBetting {
                 value: msg.value
             })
         );
+    }
+
+    // TODO: User can add but not decrease the bet on a horse
+    function increareBet() public {
+        
     }
 }
