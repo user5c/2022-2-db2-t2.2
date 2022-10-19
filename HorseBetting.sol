@@ -16,11 +16,13 @@ contract HorseBetting {
         uint256 code;
         string name;
         CareerState state;
+        bool isExsit;
     }
 
     struct Horse {
         uint256 code;
         string name;
+        bool isExsit;
     }
 
     struct HorseRace {
@@ -41,7 +43,8 @@ contract HorseBetting {
     // Join a career(Career object) with a horse(horseCode) to find how many horses have a career
     mapping(uint256 => Horse[]) public careerCodeToHorses; // less than or equal to 5 horses per career
 
-    
+    //Register if the code of carrer escists  https://ethereum.stackexchange.com/questions/84109/solidity-0-4-26-check-if-element-already-exists-in-array
+    mapping(uint256 => bool) public careerExists;
     constructor() {
         //console.log("Owner contract deployed by:", msg.sender);
         //owner = msg.sender; // 'msg.sender' is sender of current call, contract deployer for a constructor
@@ -60,30 +63,38 @@ contract HorseBetting {
      * @param name value to career
      */
     function registerCareer(uint256 code, string memory name) public  {
-        // TODO: Validate career code to know if it doesn't exist already
+        // TODO: Validate career code to know if it doesn't exist already (Listo)
+        uint256 idexList = careerCodeToCareersListIndex[code];
+        require(!careers[idexList].isExsit, "This career exists");
         careerCodeToCareersListIndex[code] = careers.length;
         careers.push(
             Career({
                 code: code,
                 name: name,
-                state: CareerState.CREATED
+                state: CareerState.CREATED,
+                isExsit:true
             })
         );
     }
 
     /**
      * @dev Create a Horse Object and save identifier into a map horseCodeToHorsesListIndex
-     * @param code value to career
-     * @param name value to career
+     * @param code value to hourse
+     * @param name value to hourse
      */
     function registerHorse(uint256 code, string memory name) public  {
-        // TODO: Validate horse code to know if it doesn't exist already
-        // TODO: Catch the error when the number of horses is greater than 5
+        // TODO: Validate horse code to know if it doesn't exist already (Listo)
+        // TODO: Catch the error when the number of horses is greater than 5 --> Esta es cuando se registra un caballo en una carrera.
+        // Valida si el caballo existe
+        uint256 idexList = horseCodeToHorsesListIndex[code];
+        require(!horses[idexList].isExsit, "This hourse exist");
+        // Valida si la carreta tiene menos de 5 caballos
         horseCodeToHorsesListIndex[code] = horses.length;
         horses.push(
             Horse({
                 code: code,
-                name: name
+                name: name,
+                isExsit:true
             })
         );
     }
@@ -140,10 +151,15 @@ contract HorseBetting {
      * @param careerCode value of code career
      */
     function changeCareerState(uint256 careerCode) public {
-        // TODO: Find career object 
-        // TODO: Validate if the career have and correct state
-        // TODO: Validate if the career have greater than 2 horses registered to do the state change
-        // TODO: Change career state and return new career state
+        // TODO: Find career object  (listo)
+        // TODO: Validate if the career have and correct state (listo)
+        // TODO: Validate if the career have greater than 2 horses registered to do the state change (list0)
+        // TODO: Change career state and return new career state (listo)
+        Career storage myCareer = careers[careerCode]; 
+        require(myCareer.state == CareerState.CREATED, "Verify if the race is in created state");
+        require(careerCodeToHorses[myCareer.code].length>2, "The race has only one horse, therefore it cannot be registered.");
+        myCareer.state = CareerState.REGISTERED;
+
 
     }
 
