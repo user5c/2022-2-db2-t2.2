@@ -15,13 +15,13 @@ contract HorseBetting {
         uint256 code;
         string name;
         CareerState state;
-        bool isExsit;
+        bool itIsOut;
     }
 
     struct Horse {
         uint256 code;
         string name;
-        bool isExsit;
+        bool itIsOut;
     }
 
     struct Bet {
@@ -46,9 +46,9 @@ contract HorseBetting {
     // Register a bet per horse in a career and associate to gamber
     mapping(uint256 => Bet[]) public careerCodeToBet;
 
+    bool internal careersListInitialized;
+    bool internal horsesListInitialized;
 
-    // Register if the code of carrer escists  https://ethereum.stackexchange.com/questions/84109/solidity-0-4-26-check-if-element-already-exists-in-array
-    mapping(uint256 => bool) public careerExists;
 
     constructor() {
         //console.log("Owner contract deployed by:", msg.sender);
@@ -56,10 +56,12 @@ contract HorseBetting {
         //emit OwnerSet(address(0), owner);
 
         // Default values:
-        // When an index doesn't exists into array then the return default value is 0
+        // When an index doesn't exist into array then the return default value is 0
         // So if you save an object at position 0, it is imposible to differenciate between two values
         registerCareer(0, "defaultCareer");
         registerHorse(0, "defaultHorse");
+        careersListInitialized = true;
+        horsesListInitialized = true;
     }
 
     /**
@@ -68,10 +70,10 @@ contract HorseBetting {
      * @param name value to career
      */
     function registerCareer(uint256 code, string memory name) public  {
-        uint256 idexList = careerCodeToCareersListIndex[code];
+        uint256 careerCodeListIndex = careerCodeToCareersListIndex[code];
         
         // Validate career code to know if it doesn't exist already 
-        require(!careers[idexList].isExsit, "The career code already exists");
+        require(!careersListInitialized || careerCodeListIndex == 0, "The career code already exists");
         
         careerCodeToCareersListIndex[code] = careers.length;
         careers.push(
@@ -79,7 +81,7 @@ contract HorseBetting {
                 code: code,
                 name: name,
                 state: CareerState.CREATED,
-                isExsit:true
+                itIsOut: false
             })
         );
     }
@@ -90,17 +92,17 @@ contract HorseBetting {
      * @param name value to hourse
      */
     function registerHorse(uint256 code, string memory name) public  {
-        uint256 idexList = horseCodeToHorsesListIndex[code];
+        uint256 horseCodeListIndex = horseCodeToHorsesListIndex[code];
         
         // Validate horse code to know if it doesn't exist already
-        require(!horses[idexList].isExsit, "The hourse code already exists");
+        require(!horsesListInitialized || horseCodeListIndex == 0, "The hourse code already exists");
 
         horseCodeToHorsesListIndex[code] = horses.length;
         horses.push(
             Horse({
                 code: code,
                 name: name,
-                isExsit:true
+                itIsOut: false
             })
         );
     }
