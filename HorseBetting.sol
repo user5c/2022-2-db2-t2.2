@@ -71,6 +71,26 @@ contract HorseBetting {
         horsesListInitialized = true;
     }
 
+    function getCareerObj(uint256 careerCode) internal view returns (Career storage) {
+        // Find Career object
+        uint256 careerCodeListIndex = careerCodeToCareersListIndex[careerCode];
+        
+        // Validate career code to know if it doesn't exist already
+        require(careerCodeListIndex > 0, "Career does not exists");
+
+        return careers[careerCodeListIndex];
+    }
+
+    function getHorseObj(uint256 horseCode) internal view returns (Horse storage) {
+        // Find Horse object
+        uint256 horseCodeListIndex = horseCodeToHorsesListIndex[horseCode];
+        
+        // Validate horse code to know if it doesn't exist already
+        require(horseCodeListIndex > 0, "Horse does not exists");
+        
+        return  horses[horseCodeListIndex];
+    }
+
     /**
      * @dev Create a Career Object and save identifier into a map careerCodeToCareersListIndex
      * @param code value to career
@@ -121,12 +141,7 @@ contract HorseBetting {
      */
     function registerHorseInCareer(uint256 horseCode, uint256 careerCode) public isHost {
         // Find Career object
-        uint256 careerCodeListIndex = careerCodeToCareersListIndex[careerCode];
-        
-        // Validate career code to know if it doesn't exist already
-        require(careerCodeListIndex > 0, "Career does not exists");
-
-        Career memory careerNew = careers[careerCodeListIndex];
+        Career memory careerNew = getCareerObj(careerCode);
         
         // Validate if the career has CREATED state
         require(careerNew.state == CareerState.CREATED, "Career must have a CREATED state");
@@ -138,12 +153,7 @@ contract HorseBetting {
         require(careersPerHorse.length < 5, "Career accepts 5 horses only");
         
         // Find Horse object
-        uint256 horseCodeListIndex = horseCodeToHorsesListIndex[horseCode];
-        
-        // Validate horse code to know if it doesn't exist already
-        require(horseCodeListIndex > 0, "Horse does not exists");
-        
-        Horse memory horseNew = horses[horseCodeListIndex];
+        Horse memory horseNew = getHorseObj(horseCode);
 
         // Get all horses per career
         Horse[] storage horsesPerCareer = careerCodeToHorses[careerCode];
@@ -168,12 +178,7 @@ contract HorseBetting {
     function changeCareerState(uint256 careerCode) public isHost returns (CareerState){
         // TODO: Validate host user is the caller to the function
         // Find Career object
-        uint256 careerCodeListIndex = careerCodeToCareersListIndex[careerCode];
-        
-        // Validate career code to know if it doesn't exist already
-        require(careerCodeListIndex > 0, "Career does not exists");
-
-        Career storage careerObj = careers[careerCodeListIndex];
+        Career storage careerObj = getCareerObj(careerCode);
 
         // Get all horses per career
         Horse[] storage horsesPerCareer = careerCodeToHorses[careerCode];
@@ -202,25 +207,15 @@ contract HorseBetting {
      * @param careerCode value of code career
      */
     function bet(uint256 horseCode, uint256 careerCode) public payable isGambler {
-        // TODO: Validate if value of the ber is greater than or equal 1
+        // TODO: Validate if value of the bet is greater than or equal 1
         // Find Career object
-        uint256 careerCodeListIndex = careerCodeToCareersListIndex[careerCode];
-        
-        // Validate career code to know if it doesn't exist already
-        require(careerCodeListIndex > 0, "Career does not exists");
-
-        Career memory careerObj = careers[careerCodeListIndex];
+        Career memory careerObj = getCareerObj(careerCode);
         
         // Validate if the career has CREATED state
         require(careerObj.state == CareerState.REGISTERED, "Career must have a REGISTERED state");
         
         // Find Horse object
-        uint256 horseCodeListIndex = horseCodeToHorsesListIndex[horseCode];
-        
-        // Validate horse code to know if it doesn't exist already
-        require(horseCodeListIndex > 0, "Horse does not exists");
-
-        Horse memory horseObj = horses[horseCodeListIndex];
+        Horse memory horseObj = getHorseObj(horseCode);
 
         // Get all horses per career
         Horse[] storage horsesPerCareer = careerCodeToHorses[careerCode];
