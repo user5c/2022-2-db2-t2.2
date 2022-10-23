@@ -10,7 +10,6 @@ contract HorseBetting {
 
     enum CareerState { CREATED, REGISTERED, FINISHED}    
 
-
     struct Career {
         uint256 code;
         string name;
@@ -32,6 +31,7 @@ contract HorseBetting {
 
     Career[] public careers;
     Horse[] public horses;
+    address public host;
 
     // Guardar el codigo de la carrera y devolver la posicion en la que quedó en la lista careers
     mapping(uint256 => uint256) public careerCodeToCareersListIndex;
@@ -49,11 +49,18 @@ contract HorseBetting {
     bool internal careersListInitialized;
     bool internal horsesListInitialized;
 
+    modifier isHost() {
+        require(msg.sender == host, "Caller is not host");
+        _;
+    }
+
+    modifier isGambler() {
+        require(msg.sender != host, "Caller is not gambler");
+        _;
+    }
 
     constructor() {
-        //console.log("Owner contract deployed by:", msg.sender);
-        //owner = msg.sender; // 'msg.sender' is sender of current call, contract deployer for a constructor
-        //emit OwnerSet(address(0), owner);
+        host = msg.sender;
 
         // Default values:
         // When an index doesn't exist into array then the return default value is 0
@@ -69,7 +76,7 @@ contract HorseBetting {
      * @param code value to career
      * @param name value to career
      */
-    function registerCareer(uint256 code, string memory name) public  {
+    function registerCareer(uint256 code, string memory name) public  isHost {
         uint256 careerCodeListIndex = careerCodeToCareersListIndex[code];
         
         // Validate career code to know if it doesn't exist already 
@@ -91,7 +98,7 @@ contract HorseBetting {
      * @param code value to hourse
      * @param name value to hourse
      */
-    function registerHorse(uint256 code, string memory name) public  {
+    function registerHorse(uint256 code, string memory name) public isHost {
         uint256 horseCodeListIndex = horseCodeToHorsesListIndex[code];
         
         // Validate horse code to know if it doesn't exist already
@@ -112,7 +119,7 @@ contract HorseBetting {
      * @param horseCode value of code horse
      * @param careerCode value of code career
      */
-    function registerHorseInCareer(uint256 horseCode, uint256 careerCode) public  {
+    function registerHorseInCareer(uint256 horseCode, uint256 careerCode) public isHost {
         // Find Career object
         uint256 careerCodeListIndex = careerCodeToCareersListIndex[careerCode];
         
@@ -158,7 +165,7 @@ contract HorseBetting {
      * @dev Change career state only if the career have greater than 2 horses registered
      * @param careerCode value of code career
      */
-    function changeCareerState(uint256 careerCode) public returns (CareerState){
+    function changeCareerState(uint256 careerCode) public isHost returns (CareerState){
         // TODO: Validate host user is the caller to the function
         // Find Career object
         uint256 careerCodeListIndex = careerCodeToCareersListIndex[careerCode];
@@ -194,8 +201,7 @@ contract HorseBetting {
      * @param horseCode value of code horse
      * @param careerCode value of code career
      */
-    function bet(uint256 horseCode, uint256 careerCode) public payable {
-        // TODO: Validate if msg.sender is not the host
+    function bet(uint256 horseCode, uint256 careerCode) public payable isGambler {
         // TODO: Validate if value of the ber is greater than or equal 1
         // Find Career object
         uint256 careerCodeListIndex = careerCodeToCareersListIndex[careerCode];
