@@ -179,7 +179,6 @@ contract HorseBetting {
      * @param careerCode value of code career
      */
     function changeCareerState(uint256 careerCode) public isHost returns (CareerState){
-        // TODO: Validate host user is the caller to the function
         // Find Career object
         Career storage careerObj = getCareerObj(careerCode);
 
@@ -193,7 +192,40 @@ contract HorseBetting {
             careerObj.state = CareerState.REGISTERED;
         } else {
             if (careerObj.state == CareerState.REGISTERED) {
-                // TODO: finish the career and give the prize to the winners
+                 // Generates a random number
+                uint256 Nroale = createRandom(horsesPerCareer.length);
+                //Select the win house
+                Horse memory winHourse = horsesPerCareer[Nroale];
+                //sum the all values;
+                uint256 totalBet = 0;
+                uint256 totalUserWin = 0;
+                Bet[] memory BetPeerCareer = careerCodeToBet[careerCode];
+                for (uint8 i=0; i < BetPeerCareer.length; i++) {
+                    Bet memory bet = BetPeerCareer[i];
+                    totalBet += bet.value;
+                    if(bet.horse.code == winHourse.code){
+                        address  add = bet.gambler;
+                        totalUserWin +=1;
+                    }
+                }
+                careerObj.state = CareerState.FINISHED;
+                //The fourth part is for the host
+                if (totalBet == 0){
+                    //send all money to host 
+                    //TODO SEND MONEY TO HOST send(totalBet)
+                    return careerObj.state;
+                }else{
+                    uint256 hostCommission = totalBet/4;
+                    totalBet -= hostCommission;
+                    uint256 earnedValue = totalBet/totalUserWin;
+                    for (uint8 i=0; i < BetPeerCareer.length; i++) {
+                        Bet memory bet = BetPeerCareer[i];
+                        totalBet += bet.value;
+                        if(bet.horse.code == winHourse.code){
+                            //Sende the money
+                        } 
+                }
+
                 //careerObj.state = CareerState.FINISHED;
                 
                 // temporal sentence to get all money and send to the caller
@@ -203,7 +235,6 @@ contract HorseBetting {
 
         return careerObj.state;
     }
-
     /**
      * @dev bet in a unique horse per career an amount of Eth. The method is only used by non-host user
      * @param horseCode value of code horse
@@ -265,5 +296,11 @@ contract HorseBetting {
         }
 
     }
+     function createRandom(uint number) public view returns(uint256){
+        require(number<6, "number is less than 6");
+        require(number>1, "number is greater than 1");
+        uint256 value =  uint256(blockhash(block.number-1)) % number;
+        return value;
+        }
 
 }
