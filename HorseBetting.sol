@@ -158,6 +158,9 @@ contract HorseBetting {
         // Get all horses per career
         Horse[] storage horsesPerCareer = careerCodeToHorses[careerCode];
 
+        // Validate if the career has a number less than 5 horses
+        require(horsesPerCareer.length < 5, "Career accepts 5 horses only");
+
         // Validate if the horse is already registered in the career
         for(uint8 i=0; i < horsesPerCareer.length; i++) {
             Horse memory horseInCareer = horsesPerCareer[i];
