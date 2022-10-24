@@ -195,7 +195,7 @@ contract HorseBetting {
      * @dev Change career state only if the career have greater than 2 horses registered
      * @param careerCode value of code career
      */
-    function changeCareerState(uint256 careerCode) public isHost returns (CareerState){
+    function changeCareerState(uint256 careerCode) public payable isHost returns (CareerState){
         // Find Career object
         Career storage careerObj = getCareerObj(careerCode);
 
@@ -338,9 +338,10 @@ contract HorseBetting {
         for (uint256 i = 1; i < careers.length; i++) {
             Career memory careerToLog = careers[i];
             console.log("#######       CARRERA      #######");
-            console.log("Codigo: ", careerToLog.code);
-            console.log("Nombre: ", careerToLog.name);
-            console.log("Estado: ", getCareerStateString(careerToLog.state));
+            console.log("Codigo:                    ", careerToLog.code);
+            console.log("Nombre:                    ", careerToLog.name);
+            console.log("Estado:                    ", getCareerStateString(careerToLog.state));
+            console.log("Codigo de caballo ganador: ", careerToLog.winningHorseCode);
             console.log("-------CABALLOS EN CARRERA-------");
             
             // Get all horses per career
@@ -358,7 +359,6 @@ contract HorseBetting {
     function getWinningCareerInfo(uint256 careerCode) public view {
         // Find Career object
         Career memory careerObj = getCareerObj(careerCode);
-        // TODO: Validate 10 winningHorseCode like defect value
         Horse memory winningHorseObj = getHorseObj(careerObj.winningHorseCode);
 
         console.log("#######       CARRERA      #######");
@@ -370,7 +370,7 @@ contract HorseBetting {
         console.log("Nombre: ", winningHorseObj.name);
         console.log("-------------GANADORES-------------");
 
-        // Get all bets per career and add total bets
+        // Get all bets per career
         Bet[] memory bets = careerCodeToBet[careerObj.code];
         for (uint256 i = 0; i < bets.length; i++) {
             Bet memory temporalBet = bets[i];
