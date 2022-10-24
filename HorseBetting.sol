@@ -228,10 +228,10 @@ contract HorseBetting {
             for (uint256 j = 0; j < bets.length; j++) {
                 Bet memory temporalBet = bets[j];
                 if (winningHorseObj.code == temporalBet.horse.code) {
-                    uint256 percentageBet = (temporalBet.value / sumWinningBets) * 100; // Get percentage
+                    uint256 percentageBet = (temporalBet.value / sumWinningBets) * 1000; // Get percentage
 
                     // TRANSLATE: Repartir proporcionalmente la apuesta de acuerdo al monto que aposto
-                    uint256 toGambler = (percentageBet * toGamblers ) / 100;
+                    uint256 toGambler = (percentageBet * toGamblers ) / 1000;
 
                     // Transfer to gambler
                     payable(temporalBet.gambler).transfer(toGambler);
@@ -253,6 +253,7 @@ contract HorseBetting {
 
         return careerObj.state;
     }
+
     /**
      * @dev bet in a unique horse per career an amount of Eth. The method is only used by non-host user
      * @param horseCode value of code horse
