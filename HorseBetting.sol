@@ -185,7 +185,6 @@ contract HorseBetting {
      * @param careerCode value of code career
      */
     function changeCareerState(uint256 careerCode) public isHost returns (CareerState){
-        // TODO: Validate host user is the caller to the function
         // Find Career object
         Career storage careerObj = getCareerObj(careerCode);
 
@@ -197,65 +196,63 @@ contract HorseBetting {
             bool moreThan2Horses = horsesPerCareer.length >= 2;
             require(moreThan2Horses, "To change the state of the career then the career must have more than 2 horses registered");
             careerObj.state = CareerState.REGISTERED;
-        } else {
-            if (careerObj.state == CareerState.REGISTERED) {
-                // finish the career and give the prize to the winners
+        } else if (careerObj.state == CareerState.REGISTERED) {
+            // finish the career and give the prize to the winners
 
-                // get winning horse
-                uint256 horsesPerCareerSize = horsesPerCareer.length;
-                lastWinningHorse = getRandomNumber(horsesPerCareerSize);
-                Horse memory winningHorseObj = horsesPerCareer[lastWinningHorse];
+            // get winning horse
+            uint256 horsesPerCareerSize = horsesPerCareer.length;
+            lastWinningHorse = getRandomNumber(horsesPerCareerSize);
+            Horse memory winningHorseObj = horsesPerCareer[lastWinningHorse];
 
-                // Get all bets per career and add total bets
-                // NOTE: The sum can be done when inserting the bets 
-                Bet[] storage bets = careerCodeToBet[careerObj.code];
-                uint256 sumTotalBets = 0;
-                uint256 sumWinningBets = 0;
-                for (uint256 i = 0; i < bets.length; i++) {
-                    sumTotalBets += bets[i].value;
-                    // TRANSLATE: Suma total de apuestas ganadoras
-                    if (winningHorseObj.code == bets[i].horse.code) {
-                        sumWinningBets += bets[i].value;
-                    }
+            // Get all bets per career and add total bets
+            // NOTE: The sum can be done when inserting the bets 
+            Bet[] storage bets = careerCodeToBet[careerObj.code];
+            uint256 sumTotalBets = 0;
+            uint256 sumWinningBets = 0;
+            for (uint256 i = 0; i < bets.length; i++) {
+                sumTotalBets += bets[i].value;
+                // TRANSLATE: Suma total de apuestas ganadoras
+                if (winningHorseObj.code == bets[i].horse.code) {
+                    sumWinningBets += bets[i].value;
                 }
-
-                // transfer to the host
-                uint256 toHost = sumTotalBets / 4;
-                payable(host).transfer(toHost);
-
-
-                // transfer to gamblers
-                uint256 toGamblers = sumTotalBets - toHost;
-                uint256 distributed = 0;
-                for (uint256 j = 0; j < bets.length; j++) {
-                    Bet memory temporalBet = bets[j];
-                    if (winningHorseObj.code == temporalBet.horse.code) {
-                        uint256 percentageBet = (temporalBet.value / sumWinningBets) * 100; // Get percentage
-
-                        // TRANSLATE: Repartir proporcionalmente la apuesta de acuerdo al monto que aposto
-                        uint256 toGambler = (percentageBet * toGamblers ) / 100;
-
-                        // Transfer to gambler
-                        payable(temporalBet.gambler).transfer(toGambler);
-
-                        distributed += toGambler;
-                    }
-                }
-                
-                uint256 remaining = toGamblers - distributed;
-                payable(host).transfer(remaining);
-
-
-                careerObj.state = CareerState.FINISHED;
-                
-                // temporal sentence to get all money and send to the caller
-                //selfdestruct(payable(msg.sender));
             }
+
+            // transfer to the host
+            uint256 toHost = sumTotalBets / 4;
+            payable(host).transfer(toHost);
+
+
+            // transfer to gamblers
+            uint256 toGamblers = sumTotalBets - toHost;
+            uint256 distributed = 0;
+            for (uint256 j = 0; j < bets.length; j++) {
+                Bet memory temporalBet = bets[j];
+                if (winningHorseObj.code == temporalBet.horse.code) {
+                    uint256 percentageBet = (temporalBet.value / sumWinningBets) * 100; // Get percentage
+
+                    // TRANSLATE: Repartir proporcionalmente la apuesta de acuerdo al monto que aposto
+                    uint256 toGambler = (percentageBet * toGamblers ) / 100;
+
+                    // Transfer to gambler
+                    payable(temporalBet.gambler).transfer(toGambler);
+
+                    distributed += toGambler;
+                }
+            }
+            
+            uint256 remaining = toGamblers - distributed;
+            payable(host).transfer(remaining);
+
+
+            careerObj.state = CareerState.FINISHED;
+            
+            // temporal sentence to get all money and send to the caller
+            //selfdestruct(payable(msg.sender));
+            
         }
 
         return careerObj.state;
     }
-
     /**
      * @dev bet in a unique horse per career an amount of Eth. The method is only used by non-host user
      * @param horseCode value of code horse
@@ -318,5 +315,4 @@ contract HorseBetting {
         }
 
     }
-
 }
