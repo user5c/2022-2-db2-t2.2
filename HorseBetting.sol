@@ -2,6 +2,8 @@
 
 pragma solidity >=0.7.0 <0.9.0;
 
+import "hardhat/console.sol";
+
 /**
  * @title HorseBetting
  * @dev 
@@ -14,19 +16,19 @@ contract HorseBetting {
         uint256 code;
         string name;
         CareerState state;
-        bool itIsOut;
+        uint256 winningHorseCode;
     }
 
     struct Horse {
         uint256 code;
         string name;
-        bool itIsOut;
     }
 
     struct Bet {
         Horse horse;
         address gambler;
         uint256 value;
+        uint256 earnedValue;
     }
 
     Career[] public careers;
@@ -80,6 +82,16 @@ contract HorseBetting {
         return seed;
     }
 
+    function getCareerStateString(CareerState state) private pure returns (string memory) {
+        if (state == CareerState.CREATED) {
+            return "Creada";
+        } else if (state == CareerState.REGISTERED) {
+            return "Registrada";
+        } else {
+            return "Terminada";
+        }
+    }
+
     function getCareerObj(uint256 careerCode) private view returns (Career storage) {
         // Find Career object
         uint256 careerCodeListIndex = careerCodeToCareersListIndex[careerCode];
@@ -117,7 +129,7 @@ contract HorseBetting {
                 code: code,
                 name: name,
                 state: CareerState.CREATED,
-                itIsOut: false
+                winningHorseCode: 0 // default value to defaultHorseCode
             })
         );
     }
@@ -137,8 +149,7 @@ contract HorseBetting {
         horses.push(
             Horse({
                 code: code,
-                name: name,
-                itIsOut: false
+                name: name
             })
         );
     }
@@ -201,8 +212,9 @@ contract HorseBetting {
 
             // get winning horse
             uint256 horsesPerCareerSize = horsesPerCareer.length;
-            lastWinningHorse = getRandomNumber(horsesPerCareerSize);
-            Horse memory winningHorseObj = horsesPerCareer[lastWinningHorse];
+            uint256 winningHorseIndex = getRandomNumber(horsesPerCareerSize);
+            Horse memory winningHorseObj = horsesPerCareer[winningHorseIndex];
+            careerObj.winningHorseCode = winningHorseObj.code; // Save winning horse code into the CareerObj
 
             // Get all bets per career and add total bets
             // NOTE: The sum can be done when inserting the bets 
@@ -226,17 +238,18 @@ contract HorseBetting {
             uint256 toGamblers = sumTotalBets - toHost;
             uint256 distributed = 0;
             for (uint256 j = 0; j < bets.length; j++) {
-                Bet memory temporalBet = bets[j];
+                Bet storage temporalBet = bets[j];
                 if (winningHorseObj.code == temporalBet.horse.code) {
                     uint256 percentageBet = (temporalBet.value / sumWinningBets) * 1000; // Get percentage
 
                     // TRANSLATE: Repartir proporcionalmente la apuesta de acuerdo al monto que aposto
-                    uint256 toGambler = (percentageBet * toGamblers ) / 1000;
+                    uint256 earnedValue = (percentageBet * toGamblers ) / 1000;
 
                     // Transfer to gambler
-                    payable(temporalBet.gambler).transfer(toGambler);
+                    payable(temporalBet.gambler).transfer(earnedValue);
+                    temporalBet.earnedValue = earnedValue;
 
-                    distributed += toGambler;
+                    distributed += earnedValue;
                 }
             }
             
@@ -310,10 +323,62 @@ contract HorseBetting {
                 Bet({
                     horse: horseObj,
                     gambler: msg.sender,
-                    value: msg.value
+                    value: msg.value,
+                    earnedValue: 0
                 })
             );
         }
 
     }
+
+    function getCareersInfo() public view  {
+        uint256 total = careers.length - 1; // Drop defaultCareer (-1)
+        console.log("Carreras Totales: ", total);
+
+        for (uint256 i = 1; i < careers.length; i++) {
+            Career memory careerToLog = careers[i];
+            console.log("#######       CARRERA      #######");
+            console.log("Codigo: ", careerToLog.code);
+            console.log("Nombre: ", careerToLog.name);
+            console.log("Estado: ", getCareerStateString(careerToLog.state));
+            console.log("-------CABALLOS EN CARRERA-------");
+            
+            // Get all horses per career
+            Horse[] memory horsesPerCareer = careerCodeToHorses[careerToLog.code];
+            for (uint256 j = 0; j < horsesPerCareer.length; j++) {
+                Horse memory horseInCareer = horsesPerCareer[j];
+                console.log("#", j + 1);
+                console.log("Codigo: ", horseInCareer.code);
+                console.log("Nombre: ", horseInCareer.name);
+            }
+            console.log(">>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<");
+        }
+    }
+
+    function getWinningCareerInfo(uint256 careerCode) public view {
+        // Find Career object
+        Career memory careerObj = getCareerObj(careerCode);
+        // TODO: Validate 10 winningHorseCode like defect value
+        Horse memory winningHorseObj = getHorseObj(careerObj.winningHorseCode);
+
+        console.log("#######       CARRERA      #######");
+        console.log("Codigo: ", careerObj.code);
+        console.log("Nombre: ", careerObj.name);
+        console.log("Estado: ", getCareerStateString(careerObj.state));
+        console.log("----------CABALLO GANADOR----------");
+        console.log("Codigo: ", winningHorseObj.code);
+        console.log("Nombre: ", winningHorseObj.name);
+        console.log("-------------GANADORES-------------");
+
+        // Get all bets per career and add total bets
+        Bet[] memory bets = careerCodeToBet[careerObj.code];
+        for (uint256 i = 0; i < bets.length; i++) {
+            Bet memory temporalBet = bets[i];
+            if (winningHorseObj.code == temporalBet.horse.code) {
+                console.log(temporalBet.gambler, temporalBet.earnedValue);
+            }
+        }
+    }
+
+
 }
