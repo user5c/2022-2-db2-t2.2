@@ -32,10 +32,11 @@ contract HorseBetting {
     Career[] public careers;
     Horse[] public horses;
     address public host;
+    uint256 public lastWinningHorse;
 
-    // Guardar el codigo de la carrera y devolver la posicion en la que quedó en la lista careers
+    // TRANSLATE: Guardar el codigo de la carrera y devolver la posicion en la que quedó en la lista careers
     mapping(uint256 => uint256) public careerCodeToCareersListIndex;
-    // Guardar el codigo del caballo y devolver la posicion en la que quedó en la lista horses
+    // TRANSLATE: Guardar el codigo del caballo y devolver la posicion en la que quedó en la lista horses
     mapping(uint256 => uint256) public horseCodeToHorsesListIndex;
 
     // Register a horse(Horse object) in a career(careerCode)
@@ -43,11 +44,12 @@ contract HorseBetting {
     // Join a career(Career object) with a horse(horseCode) to find how many horses have a career
     mapping(uint256 => Horse[]) public careerCodeToHorses; // less than or equal to 5 horses per career
 
-    // Register a bet per horse in a career and associate to gamber
+    // Register a bet per horse in a career and associate to gambler
     mapping(uint256 => Bet[]) public careerCodeToBet;
 
-    bool internal careersListInitialized;
-    bool internal horsesListInitialized;
+    bool private careersListInitialized;
+    bool private horsesListInitialized;
+    uint256 private seed;
 
     modifier isHost() {
         require(msg.sender == host, "Caller is not host");
@@ -61,6 +63,8 @@ contract HorseBetting {
 
     constructor() {
         host = msg.sender;
+        // Seed to make a random number
+        seed = (block.timestamp + block.difficulty) % 100000000;
 
         // Default values:
         // When an index doesn't exist into array then the return default value is 0
@@ -71,7 +75,12 @@ contract HorseBetting {
         horsesListInitialized = true;
     }
 
-    function getCareerObj(uint256 careerCode) internal view returns (Career storage) {
+    function getRandomNumber(uint256 horsesPerCareerSize) private returns (uint256) {
+        seed = (seed + block.timestamp + block.difficulty) % horsesPerCareerSize;
+        return seed;
+    }
+
+    function getCareerObj(uint256 careerCode) private view returns (Career storage) {
         // Find Career object
         uint256 careerCodeListIndex = careerCodeToCareersListIndex[careerCode];
         
@@ -81,7 +90,7 @@ contract HorseBetting {
         return careers[careerCodeListIndex];
     }
 
-    function getHorseObj(uint256 horseCode) internal view returns (Horse storage) {
+    function getHorseObj(uint256 horseCode) private view returns (Horse storage) {
         // Find Horse object
         uint256 horseCodeListIndex = horseCodeToHorsesListIndex[horseCode];
         
@@ -149,9 +158,6 @@ contract HorseBetting {
         // Get all careers per horse
         Career[] storage careersPerHorse = horseCodeToCareers[horseCode];
         
-        // Validate if the career has a number less than 5 horses
-        require(careersPerHorse.length < 5, "Career accepts 5 horses only");
-        
         // Find Horse object
         Horse memory horseNew = getHorseObj(horseCode);
 
@@ -193,11 +199,57 @@ contract HorseBetting {
             careerObj.state = CareerState.REGISTERED;
         } else {
             if (careerObj.state == CareerState.REGISTERED) {
-                // TODO: finish the career and give the prize to the winners
-                //careerObj.state = CareerState.FINISHED;
+                // finish the career and give the prize to the winners
+
+                // get winning horse
+                uint256 horsesPerCareerSize = horsesPerCareer.length;
+                lastWinningHorse = getRandomNumber(horsesPerCareerSize);
+                Horse memory winningHorseObj = horsesPerCareer[lastWinningHorse];
+
+                // Get all bets per career and add total bets
+                // NOTE: The sum can be done when inserting the bets 
+                Bet[] storage bets = careerCodeToBet[careerObj.code];
+                uint256 sumTotalBets = 0;
+                uint256 sumWinningBets = 0;
+                for (uint256 i = 0; i < bets.length; i++) {
+                    sumTotalBets += bets[i].value;
+                    // TRANSLATE: Suma total de apuestas ganadoras
+                    if (winningHorseObj.code == bets[i].horse.code) {
+                        sumWinningBets += bets[i].value;
+                    }
+                }
+
+                // transfer to the host
+                uint256 toHost = sumTotalBets / 4;
+                payable(host).transfer(toHost);
+
+
+                // transfer to gamblers
+                uint256 toGamblers = sumTotalBets - toHost;
+                uint256 distributed = 0;
+                for (uint256 j = 0; j < bets.length; j++) {
+                    Bet memory temporalBet = bets[j];
+                    if (winningHorseObj.code == temporalBet.horse.code) {
+                        uint256 percentageBet = (temporalBet.value / sumWinningBets) * 100; // Get percentage
+
+                        // TRANSLATE: Repartir proporcionalmente la apuesta de acuerdo al monto que aposto
+                        uint256 toGambler = (percentageBet * toGamblers ) / 100;
+
+                        // Transfer to gambler
+                        payable(temporalBet.gambler).transfer(toGambler);
+
+                        distributed += toGambler;
+                    }
+                }
+                
+                uint256 remaining = toGamblers - distributed;
+                payable(host).transfer(remaining);
+
+
+                careerObj.state = CareerState.FINISHED;
                 
                 // temporal sentence to get all money and send to the caller
-                selfdestruct(payable(msg.sender));
+                //selfdestruct(payable(msg.sender));
             }
         }
 
@@ -234,7 +286,7 @@ contract HorseBetting {
         }
         require(horseRegistered, "Horse is not already registered in the career");
 
-        // Add bet in career
+        // Get all bets per career
         Bet[] storage bets = careerCodeToBet[careerObj.code];
 
         // Validate if the gambler is already in the career and if he want increase the bet
@@ -249,6 +301,7 @@ contract HorseBetting {
             }
         }
         
+        // Add bet in career
         if (gamblerInCareer) {
             require (betObjTmp.horse.code == horseObj.code, "The user has already registered a bet in other horse on this career");
             // Increase the bet 
