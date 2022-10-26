@@ -34,7 +34,6 @@ contract HorseBetting {
     Career[] public careers;
     Horse[] public horses;
     address public host;
-    uint256 public lastWinningHorse;
 
     // TRANSLATE: Guardar el codigo de la carrera y devolver la posicion en la que quedó en la lista careers
     mapping(uint256 => uint256) public careerCodeToCareersListIndex;
